@@ -2,10 +2,13 @@
 version 1, compatible with Rancher"""
 import argparse
 import yaml
+import os
 
 default_file_path = 'docker-compose.yml'
 default_output_file_path = 'docker-compose-v1.yml'
 
+
+PROJECT_NAME = os.getcwd().split(os.sep)[-1].replace("_", "-")
 EXCLUDED_OPTIONS = ['build', 'depends_on']
 
 #######################
@@ -30,7 +33,11 @@ def convert_compose_to_rancher(compose_v2_data):
             if option == 'depends_on':
                 add_or_merge(new_compose[service], 'links', service_options['depends_on'])
 
-            if option not in EXCLUDED_OPTIONS:
+            elif option == 'volumes':
+                new_volumes = [ maybe_prefix_project_name_to_volume(volume) for volume in service_options['volumes'] ]
+                add_or_merge(new_compose[service], 'volumes', new_volumes)
+
+            elif option not in EXCLUDED_OPTIONS:
                 add_or_merge(new_compose[service], option, service_options[option])
 
 
@@ -90,6 +97,19 @@ def add_or_merge(dictionary, key, values):
         dictionary[key] = values
 
     return dictionary
+
+def maybe_prefix_project_name_to_volume(volume_option):
+    """
+    Add or merge the values in 'values' to 'dictionary' at 'key'
+    """
+    if ':' in volume_option:
+        parts = volume_option.split(':')
+        parts[0] = PROJECT_NAME + "-" + parts[0]
+        prefixed_volume_option = ':'.join(parts)
+
+        return prefixed_volume_option
+    else:
+        return volume_option
 
 #######################
 # Init
