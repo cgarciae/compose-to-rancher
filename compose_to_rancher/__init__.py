@@ -100,10 +100,11 @@ def add_or_merge(dictionary, key, values):
 
 def maybe_prefix_project_name_to_volume(volume_option):
     """
-    Add or merge the values in 'values' to 'dictionary' at 'key'
+    If the volume option is for a named volume, it prefixes the name of the project to the name of the volume
     """
-    if ':' in volume_option:
-        parts = volume_option.split(':')
+    parts = volume_option.split(':')
+
+    if ':' in volume_option and '/' not in parts[0] and len(parts) > 1:
         parts[0] = PROJECT_NAME + "-" + parts[0]
         prefixed_volume_option = ':'.join(parts)
 
